@@ -13,10 +13,10 @@ if "notes" not in st.session_state:
 if "embeddings" not in st.session_state:
     st.session_state.embeddings = []
 
-# --- Load sentence transformer model ---
+# --- Load sentence transformer model on CPU (Streamlit Cloud safe) ---
 @st.cache_resource
 def load_model():
-    return SentenceTransformer('all-MiniLM-L6-v2')
+    return SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
 
 model = load_model()
 
@@ -82,12 +82,11 @@ if st.session_state.notes:
             net.add_edge(note['id'], tag)
 
     # --- Semantic similarity edges ---
-    # Compute similarity between notes using embeddings
     if len(st.session_state.notes) > 1:
         for i in range(len(st.session_state.embeddings)):
             for j in range(i+1, len(st.session_state.embeddings)):
                 sim = util.pytorch_cos_sim(st.session_state.embeddings[i]['embedding'], st.session_state.embeddings[j]['embedding'])
-                if sim >= 0.6:  # threshold for semantic similarity
+                if sim >= 0.6:
                     net.add_edge(st.session_state.embeddings[i]['id'], st.session_state.embeddings[j]['id'], color='green', width=2, dashes=True)
 
     # Generate and display graph
