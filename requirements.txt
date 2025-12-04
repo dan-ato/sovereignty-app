@@ -4,3 +4,4 @@ torch==2.1.0
 sentence-transformers==2.2.2
 huggingface-hub==0.15.1
 transformers==4.33.2
+rich<14
