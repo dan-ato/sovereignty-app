@@ -1,4 +1,2 @@
 streamlit==1.40.2
-pyvis
-networkx
-streamlit-components
+pyvis==3.6.1
