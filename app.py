@@ -1,10 +1,12 @@
 import streamlit as st
 from uuid import uuid4
 import datetime as dt
+from pyvis.network import Network
+import streamlit.components.v1 as components
 
-st.set_page_config(page_title="Sovereignty Graph POC", layout="wide")
+st.set_page_config(page_title="Sovereignty Knowledge Graph V2", layout="wide")
 
-# --- In-memory store (replace later with a DB) ---
+# --- In-memory store ---
 if "notes" not in st.session_state:
     st.session_state.notes = []
 
@@ -28,19 +30,17 @@ if st.sidebar.button("Save Note"):
         st.sidebar.error("Need both title and content.")
 
 # --- Main display ---
-st.title("Personal Sovereignty Knowledge Graph — POC")
-st.markdown("This is the bare-bones functional skeleton: notes, tags, search, and simple linking.")
+st.title("Personal Sovereignty Knowledge Graph V2")
+st.markdown("Visual network of notes and tags. Click nodes to explore content.")
 
-# --- Search Bar ---
+# --- Search ---
 query = st.text_input("Search Notes", "")
 
-# --- Filter notes ---
 results = []
 for n in st.session_state.notes:
     if query.lower() in n["title"].lower() or query.lower() in n["body"].lower():
         results.append(n)
 
-# --- Display results ---
 st.subheader(f"Results ({len(results)})")
 for n in results:
     with st.expander(f"{n['title']} — {n['timestamp']}"):
@@ -48,14 +48,26 @@ for n in results:
         if n["tags"]:
             st.write("**Tags:** ", ", ".join(n["tags"]))
 
-# --- Tag browser ---
-all_tags = sorted({tag for n in st.session_state.notes for tag in n["tags"]})
-st.subheader("Browse by Tag")
-selected_tag = st.selectbox("Tag", [""] + all_tags)
+# --- Network Graph ---
+if st.session_state.notes:
+    net = Network(height="600px", width="100%", notebook=False)
+    net.barnes_hut()
 
-if selected_tag:
-    tagged = [n for n in st.session_state.notes if selected_tag in n["tags"]]
-    st.write(f"### Notes tagged with '{selected_tag}' ({len(tagged)})")
-    for n in tagged:
-        with st.expander(n["title"]):
-            st.write(n["body"])
+    # Add nodes for notes
+    for note in st.session_state.notes:
+        net.add_node(note['id'], label=note['title'], title=note['body'], color='lightblue', shape='dot')
+
+    # Add nodes for tags and edges
+    tags_set = set()
+    for note in st.session_state.notes:
+        for tag in note['tags']:
+            if tag not in tags_set:
+                net.add_node(tag, label=tag, color='orange', shape='diamond')
+                tags_set.add(tag)
+            net.add_edge(note['id'], tag)
+
+    # Generate and display graph
+    net.show('graph.html')
+    HtmlFile = open('graph.html','r',encoding='utf-8')
+    source_code = HtmlFile.read() 
+    components.html(source_code, height=650)
