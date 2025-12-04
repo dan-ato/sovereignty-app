@@ -1,2 +1,4 @@
 streamlit==1.40.2
 pyvis==0.3.1
+sentence-transformers==2.2.2
+torch>=2.0.0
